@@ -1,109 +1,190 @@
 # Case Study Analyzer
 
-A Next.js (App Router) + TypeScript web app that accepts case study text or file uploads and returns structured analysis through a provider-agnostic LLM pipeline.
+**Turn any case study into structured, actionable intelligence in seconds.**
+
+Upload a PDF, Word doc, spreadsheet, or just paste text — pick an analytical lens (Product Manager, Consultant, AI/ML Specialist, Economist, and more) — and get a full breakdown: summary, deep analysis, key inferences, statistical evidence, anomalies, risks, recommendations, and follow-up questions. Powered by Groq's Llama 4 or Google Gemini, with a playful hand-drawn UI that feels refreshingly human.
+
+[![Try It Live](https://img.shields.io/badge/Try_It_Live-case--agent-coral?style=for-the-badge&logo=vercel)](https://case-agent-5oxkxwc7j-warlord437s-projects.vercel.app/)
+[![Next.js](https://img.shields.io/badge/Next.js-16-black?style=flat-square&logo=next.js)](https://nextjs.org)
+[![TypeScript](https://img.shields.io/badge/TypeScript-5-blue?style=flat-square&logo=typescript)](https://typescriptlang.org)
+[![Deployed on Vercel](https://img.shields.io/badge/Vercel-deployed-black?style=flat-square&logo=vercel)](https://vercel.com)
+
+---
+
+![Case Study Analyzer in action — upload a case study, pick a lens, get structured analysis](docs/screenshot.png)
+
+---
+
+## The Problem
+
+Case studies are dense. Reading a 10-page report and pulling out the key inferences, risks, anomalies, and recommendations takes time — time that could be spent acting on those insights. Existing "summarizer" tools give you a paragraph and call it done. That's not analysis, that's compression.
+
+## What This Does Differently
+
+Case Study Analyzer runs a **two-pass AI pipeline** that goes beyond summarization:
+
+1. **Pass 1 — Extraction:** The AI reads the full text and pulls out entities, themes, facts, quantitative data, problems, opportunities, unsupported claims, and notably absent information.
+2. **Pass 2 — Analysis:** Using the structured extraction, the AI writes a deep analytical report with inferences, statistical evidence evaluation, anomaly detection, and actionable recommendations — all through the lens you choose.
+
+The result isn't a summary. It's a structured analytical brief you can act on.
+
+## Features
+
+- **8 Analytical Lenses** — General, Product Manager, Business Analyst, Consulting, UX Researcher, Software Engineer, AI/ML Specialist, Global Economist. Each fundamentally changes the analytical perspective.
+- **3 Depth Levels** — Quick glance, Balanced, or Deep dive. Controls how exhaustive the output is.
+- **Multi-format Upload** — PDF, Word (.docx), Excel (.xlsx/.csv), PowerPoint (.pptx), plain text. Drag-and-drop or click to browse.
+- **10 Output Sections** — Summary, Deep Analysis, Key Inferences, Key Points, Statistical Evidence (with context), Anomalies (with severity), Focus Areas, Risks, Recommendations, Follow-up Questions.
+- **Responsive Design** — Works on phones, tablets, and desktops. Mobile-first layout with touch-friendly controls.
+- **Provider Agnostic** — Ships with Groq (Llama 4 Scout), Google Gemini, and a stub provider for offline development. Add your own in minutes.
+- **Security Hardened** — CSP headers, HSTS, rate limit handling, input sanitization, no API keys in URLs, error messages that don't leak internals.
 
 ## Quick Start
 
 ```bash
+git clone https://github.com/YOUR_USERNAME/case-agent.git
+cd case-agent
 npm install
+```
+
+**With a real LLM (recommended):**
+
+```bash
+# Get a free Groq key at https://console.groq.com/keys
+echo "GROQ_API_KEY=your_key_here" > .env.local
 npm run dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000), upload a case study (PDF, DOCX, TXT, CSV, XLSX, PPTX) or paste text, select Depth and Lens, then click **Analyze**.
+**Without any API key (stub mode):**
 
-The app ships with a **stub LLM provider** so it runs end-to-end locally without any API keys.
+```bash
+npm run dev
+```
+
+Open [http://localhost:3000](http://localhost:3000) and upload a case study.
+
+## How It Works
+
+```
+User uploads file/text
+        │
+        ▼
+  POST /api/upload         ← Extracts text from PDF/DOCX/XLSX/etc.
+        │
+        ▼
+  POST /api/analyze        ← Validates, normalizes, calls LLM pipeline
+        │
+        ├── Pass 1: Extract    → Entities, themes, facts, numbers,
+        │                        problems, opportunities, gaps
+        │
+        └── Pass 2: Write      → Summary, analysis, inferences,
+                                  stats, anomalies, risks, recs
+        │
+        ▼
+  Structured JSON response  → Rendered in collapsible card UI
+```
 
 ## Architecture
 
 ```
-├── app/                              # Next.js App Router (routes & pages)
-│   ├── api/
-│   │   ├── analyze/route.ts          # POST /api/analyze
-│   │   └── upload/route.ts           # POST /api/upload (file parsing)
-│   ├── layout.tsx                    # Root layout
-│   ├── page.tsx                      # Main page (client component)
-│   └── globals.css                   # Global cartoon-style CSS
-│
-├── frontend/                         # Client-side code
-│   ├── components/
-│   │   ├── InputPanel.tsx            # File upload, paste area, depth/lens selectors
-│   │   ├── OutputPanel.tsx           # Renders structured analysis results
-│   │   └── FileUploadZone.tsx        # Drag-and-drop multi-file upload
-│   └── types/
-│       ├── analysis.ts               # Shared TypeScript types (AnalyzeRequest, AnalysisResult)
-│       └── modules.d.ts              # Type declarations for untyped npm packages
-│
-├── backend/                          # Server-side code
-│   ├── lib/
-│   │   ├── limits.ts                 # Input length constants
-│   │   ├── sanitize.ts               # Text normalisation
-│   │   ├── hash.ts                   # SHA-256 helper (for future caching)
-│   │   └── parse-file.ts             # File-to-text extraction (PDF, DOCX, XLSX, etc.)
-│   └── llm/                          # Provider-agnostic LLM layer
-│       ├── index.ts                  # Public exports
-│       ├── pipeline.ts               # 2-pass pipeline: extract → write
-│       ├── prompts.ts                # Prompt builders for each pass
-│       ├── schema.ts                 # Empty result factory
-│       └── providers/
-│           └── stub.ts               # Deterministic stub provider (no API key needed)
+app/                           # Next.js App Router
+├── api/analyze/route.ts       # Analysis endpoint
+├── api/upload/route.ts        # File upload endpoint
+├── page.tsx                   # Main page
+├── layout.tsx                 # Root layout with viewport config
+├── error.tsx                  # Error boundary
+└── globals.css                # Hand-drawn cartoon styling
+
+frontend/                      # Client code
+├── components/
+│   ├── InputPanel.tsx         # Upload, paste, depth/lens controls
+│   ├── OutputPanel.tsx        # 10-section analysis display
+│   └── FileUploadZone.tsx     # Drag-and-drop file handler
+└── types/
+    └── analysis.ts            # Shared TypeScript types
+
+backend/                       # Server code
+├── lib/
+│   ├── parse-file.ts          # PDF/DOCX/XLSX text extraction
+│   ├── sanitize.ts            # Input normalization
+│   ├── limits.ts              # Input size constraints
+│   └── hash.ts                # SHA-256 (for future caching)
+└── llm/
+    ├── pipeline.ts            # 2-pass extract → write pipeline
+    ├── prompts.ts             # Lens-aware prompt engineering
+    ├── schema.ts              # Result shape factory
+    └── providers/
+        ├── groq.ts            # Groq (Llama 4 Scout) — default
+        ├── gemini.ts          # Google Gemini 2.0 Flash
+        └── stub.ts            # Offline stub for development
 ```
 
-### Import Aliases
+## LLM Providers
 
-| Alias | Maps to | Used by |
-|-------|---------|---------|
-| `@frontend/*` | `./frontend/*` | Pages, components, API routes (for types) |
-| `@backend/*` | `./backend/*` | API routes, LLM pipeline |
-| `@/*` | `./*` | General fallback |
+| Provider | Model | Speed | Free Tier | Setup |
+|----------|-------|-------|-----------|-------|
+| **Groq** (default) | Llama 4 Scout 17B | ~3-6s | 14,400 req/day | [console.groq.com/keys](https://console.groq.com/keys) |
+| **Gemini** | Gemini 2.0 Flash | ~5-10s | 1,500 req/day | [aistudio.google.com/apikey](https://aistudio.google.com/apikey) |
+| **Stub** | N/A | instant | unlimited | No key needed |
 
-### Data Flow
+The app checks for `GROQ_API_KEY` first, then `GEMINI_API_KEY`, then falls back to the stub.
 
-1. User uploads files or pastes text, picks depth and lens.
-2. Files go to `POST /api/upload` which extracts text using `backend/lib/parse-file.ts`.
-3. `POST /api/analyze` validates input, normalises text, and calls the LLM pipeline.
-4. **Pass 1 (Extract):** builds an extraction prompt → provider returns structured entities/themes/facts.
-5. **Pass 2 (Write):** builds a writing prompt using extracted data → provider returns the final analysis.
-6. The pipeline validates the output shape and returns `AnalysisResult` with metadata.
+### Adding a New Provider
 
-### Output Shape
-
-```json
-{
-  "summary": "...",
-  "analysis": "...",
-  "key_points": ["..."],
-  "risks": ["..."],
-  "recommendations": ["..."],
-  "follow_up_questions": ["..."],
-  "meta": {
-    "provider": "stub",
-    "latency_ms": 165,
-    "input_chars": 1234
-  }
-}
-```
-
-## Plugging In Real LLM Providers
-
-1. Create a new file in `backend/llm/providers/` (e.g., `openai.ts`).
-2. Implement the `LLMProvider` interface from `backend/llm/providers/stub.ts`.
-3. Pass your provider instance to `runAnalysis(req, myProvider)` in the API route.
+Create a file in `backend/llm/providers/` implementing the `LLMProvider` interface:
 
 ```typescript
-import type { LLMProvider } from "@backend/llm";
+import type { LLMProvider } from "./stub";
 
-export class OpenAIProvider implements LLMProvider {
-  readonly name = "openai";
+export class MyProvider implements LLMProvider {
+  readonly name = "my-provider";
+  readonly model = "my-model";
 
   async generateJson(prompt: string): Promise<string> {
-    // Call OpenAI API and return the JSON string
+    // Call your API, return JSON string
   }
 }
 ```
 
-## Future Extensibility
+Then add it to `resolveProvider()` in `backend/llm/pipeline.ts`.
 
-- **RAG / Vector DB:** Add a retrieval step before the extract pass in `backend/llm/pipeline.ts`.
-- **Caching:** Use `backend/lib/hash.ts` to cache results by input hash.
-- **Database:** Add a persistence layer without changing the LLM pipeline.
-- **Streaming:** Modify `generateJson` to return a stream and update the API route to use Server-Sent Events.
+## Deployment on Vercel
+
+1. Push to GitHub
+2. Import the repo at [vercel.com/new](https://vercel.com/new)
+3. Add environment variable: `GROQ_API_KEY` (or `GEMINI_API_KEY`)
+4. Deploy
+
+The app is configured for Vercel out of the box — `serverExternalPackages` for Node-dependent libraries, security headers, and proper viewport handling are all set.
+
+## Security
+
+- **Content-Security-Policy**, **HSTS**, **X-Frame-Options DENY**, **X-Content-Type-Options nosniff** — all enforced via `next.config.ts`
+- API keys passed via headers, never in URLs
+- Error responses never leak server internals
+- File uploads limited to 10 files, 20 MB each
+- Input text validated and normalized server-side
+- React Error Boundary for graceful crash recovery
+- `.env.local` gitignored, `.env.example` uses placeholder values
+
+## Future Roadmap
+
+- **RAG / Vector DB** — Add a retrieval step before extraction for domain-specific knowledge
+- **Caching** — Cache results by input hash using `backend/lib/hash.ts`
+- **Streaming** — Server-Sent Events for real-time analysis output
+- **Comparison Mode** — Analyze two case studies side-by-side
+- **Export** — Download analysis as PDF or Markdown
+- **Auth** — User accounts with analysis history
+
+## Tech Stack
+
+- **Framework:** Next.js 16 (App Router, Turbopack)
+- **Language:** TypeScript 5
+- **LLM:** Groq (Llama 4 Scout), Google Gemini 2.0 Flash
+- **File Parsing:** unpdf, mammoth, xlsx
+- **Styling:** Custom CSS (hand-drawn cartoon aesthetic)
+- **Hosting:** Vercel
+- **Fonts:** Gabarito, Patrick Hand
+
+## License
+
+MIT
