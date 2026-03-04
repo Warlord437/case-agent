@@ -95,9 +95,12 @@ export async function parseFile(
       text = await parsePdf(buffer);
       break;
     case "docx":
-    case "doc":
       text = await parseDocx(buffer);
       break;
+    case "doc":
+      throw new Error(
+        `Legacy .doc format is not supported. Please convert "${filename}" to .docx or PDF.`,
+      );
     case "txt":
     case "csv":
       text = buffer.toString("utf-8");

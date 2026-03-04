@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from "next/server";
 import { parseFile, isSupportedFile } from "@backend/lib/parse-file";
 
+const MAX_FILES = 10;
+
 export async function POST(request: NextRequest) {
   try {
     const formData = await request.formData();
@@ -9,6 +11,13 @@ export async function POST(request: NextRequest) {
     if (files.length === 0) {
       return NextResponse.json(
         { error: "No files uploaded." },
+        { status: 400 },
+      );
+    }
+
+    if (files.length > MAX_FILES) {
+      return NextResponse.json(
+        { error: `Too many files. Maximum is ${MAX_FILES}.` },
         { status: 400 },
       );
     }
@@ -22,9 +31,11 @@ export async function POST(request: NextRequest) {
         continue;
       }
 
+      const safeName = entry.name.replace(/[^\w.\-]/g, "_").slice(0, 100);
+
       if (!isSupportedFile(entry.name)) {
         errors.push(
-          `"${entry.name}" is not a supported file type.`,
+          `"${safeName}" is not a supported file type.`,
         );
         continue;
       }
@@ -36,14 +47,14 @@ export async function POST(request: NextRequest) {
         results.push(parsed);
       } catch (err) {
         errors.push(
-          err instanceof Error ? err.message : `Failed to parse "${entry.name}".`,
+          err instanceof Error ? err.message : `Failed to parse "${safeName}".`,
         );
       }
     }
 
     return NextResponse.json({ files: results, errors }, { status: 200 });
   } catch (err) {
-    console.error("[/api/upload]", err);
+    console.error("[/api/upload]", err instanceof Error ? err.message : err);
     return NextResponse.json(
       { error: "Failed to process upload." },
       { status: 500 },

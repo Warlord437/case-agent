@@ -97,6 +97,10 @@ export async function runAnalysis(
 
   const parsed = safeParse(writtenRaw);
 
+  if (Object.keys(parsed).length === 0) {
+    throw new Error("The AI returned an invalid response. Please try again.");
+  }
+
   const result: AnalysisResult = {
     ...emptyResult(),
     summary: ensureString(parsed.summary),

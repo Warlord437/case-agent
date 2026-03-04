@@ -45,6 +45,7 @@ export default function FileUploadZone({ disabled, onFilesReady }: Props) {
   const [uploadErrors, setUploadErrors] = useState<string[]>([]);
 
   useEffect(() => {
+    if (files.length === 0) return;
     const combined = files.map((f) => f.text).join("\n\n---\n\n");
     onFilesReady(combined);
   }, [files, onFilesReady]);

@@ -73,7 +73,7 @@ export async function POST(request: NextRequest) {
 
     return NextResponse.json(result, { status: 200 });
   } catch (err) {
-    console.error("[/api/analyze]", err);
+    console.error("[/api/analyze]", err instanceof Error ? err.message : err);
 
     if (err instanceof SyntaxError) {
       return NextResponse.json(
@@ -99,7 +99,7 @@ export async function POST(request: NextRequest) {
     }
 
     return NextResponse.json(
-      { error: msg || "Internal server error." },
+      { error: "Internal server error." },
       { status: 500 },
     );
   }

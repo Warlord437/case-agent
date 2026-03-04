@@ -3,6 +3,7 @@ import type { LLMProvider, LLMProviderOptions } from "./stub";
 const DEFAULT_MODEL = "meta-llama/llama-4-scout-17b-16e-instruct";
 const MAX_RETRIES = 2;
 const BASE_DELAY_MS = 1500;
+const REQUEST_TIMEOUT_MS = 60_000;
 
 interface ChatMessage {
   role: "system" | "user" | "assistant";
@@ -83,11 +84,12 @@ export class GroqProvider implements LLMProvider {
           Authorization: `Bearer ${this.apiKey}`,
         },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
 
       if (res.status === 429) {
         lastError = new Error(
-          "Groq API rate limit reached. Free tier allows 30 requests/min. Please wait a moment.",
+          "rate limit: Groq API rate limit reached. Please wait a moment.",
         );
         if (attempt < MAX_RETRIES) continue;
         throw lastError;
@@ -95,22 +97,24 @@ export class GroqProvider implements LLMProvider {
 
       if (res.status === 401) {
         throw new Error(
-          "Groq API key is invalid. Get one at https://console.groq.com/keys",
+          "invalid: Groq API key is not valid.",
         );
       }
 
       if (!res.ok) {
-        const errText = await res.text().catch(() => "unknown error");
+        const errText = await res.text().catch(() => "");
+        console.error(`[GroqProvider] API error ${res.status}:`, errText.slice(0, 500));
         throw new Error(
-          `Groq API returned ${res.status}: ${errText.slice(0, 300)}`,
+          `Groq API returned an error (status ${res.status}).`,
         );
       }
 
       const data: GroqResponse = await res.json();
 
       if (data.error) {
+        console.error("[GroqProvider] Response error:", data.error.message);
         throw new Error(
-          `Groq API error: ${data.error.message ?? "unknown"}`,
+          `Groq API error: ${data.error.type ?? "unknown"}.`,
         );
       }
 
@@ -118,12 +122,12 @@ export class GroqProvider implements LLMProvider {
 
       if (!text) {
         const reason = data.choices?.[0]?.finish_reason ?? "no content";
-        throw new Error(`Groq returned no text. Finish reason: ${reason}`);
+        throw new Error(`Groq returned no text (finish reason: ${reason}).`);
       }
 
       return stripMarkdownFences(text);
     }
 
-    throw lastError ?? new Error("Groq request failed after retries");
+    throw lastError ?? new Error("Groq request failed after retries.");
   }
 }

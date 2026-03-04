@@ -3,6 +3,7 @@ import type { LLMProvider, LLMProviderOptions } from "./stub";
 const DEFAULT_MODEL = "gemini-2.0-flash";
 const MAX_RETRIES = 3;
 const BASE_DELAY_MS = 2000;
+const REQUEST_TIMEOUT_MS = 60_000;
 
 interface GeminiContent {
   parts: { text: string }[];
@@ -47,7 +48,7 @@ export class GeminiProvider implements LLMProvider {
     prompt: string,
     opts?: LLMProviderOptions,
   ): Promise<string> {
-    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent?key=${this.apiKey}`;
+    const url = `https://generativelanguage.googleapis.com/v1beta/models/${this.model}:generateContent`;
 
     const contents: GeminiContent[] = [
       { role: "user", parts: [{ text: prompt }] },
@@ -72,13 +73,17 @@ export class GeminiProvider implements LLMProvider {
 
       const res = await fetch(url, {
         method: "POST",
-        headers: { "Content-Type": "application/json" },
+        headers: {
+          "Content-Type": "application/json",
+          "x-goog-api-key": this.apiKey,
+        },
         body: JSON.stringify(body),
+        signal: AbortSignal.timeout(REQUEST_TIMEOUT_MS),
       });
 
       if (res.status === 429) {
         lastError = new Error(
-          "Gemini API rate limit exceeded. Your API key quota may be exhausted — check https://ai.google.dev/gemini-api/docs/rate-limits",
+          "rate limit: Gemini API quota exhausted. Please wait or check billing.",
         );
         if (attempt < MAX_RETRIES) continue;
         throw lastError;
@@ -86,22 +91,24 @@ export class GeminiProvider implements LLMProvider {
 
       if (res.status === 403) {
         throw new Error(
-          "Gemini API key is invalid or has been revoked. Generate a new key at https://aistudio.google.com/apikey",
+          "invalid: Gemini API key is not valid or has been revoked.",
         );
       }
 
       if (!res.ok) {
-        const errText = await res.text().catch(() => "unknown error");
+        const errText = await res.text().catch(() => "");
+        console.error(`[GeminiProvider] API error ${res.status}:`, errText.slice(0, 500));
         throw new Error(
-          `Gemini API returned ${res.status}: ${errText.slice(0, 300)}`,
+          `Gemini API returned an error (status ${res.status}).`,
         );
       }
 
       const data: GeminiResponse = await res.json();
 
       if (data.error) {
+        console.error("[GeminiProvider] Response error:", data.error.message);
         throw new Error(
-          `Gemini API error: ${data.error.message ?? "unknown"} (code ${data.error.code})`,
+          `Gemini API error (code ${data.error.code ?? "unknown"}).`,
         );
       }
 
@@ -109,12 +116,12 @@ export class GeminiProvider implements LLMProvider {
 
       if (!text) {
         const reason = data.candidates?.[0]?.finishReason ?? "no content";
-        throw new Error(`Gemini returned no text. Finish reason: ${reason}`);
+        throw new Error(`Gemini returned no text (finish reason: ${reason}).`);
       }
 
       return stripMarkdownFences(text);
     }
 
-    throw lastError ?? new Error("Gemini request failed after retries");
+    throw lastError ?? new Error("Gemini request failed after retries.");
   }
 }
