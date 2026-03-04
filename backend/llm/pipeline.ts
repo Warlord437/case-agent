@@ -7,6 +7,7 @@ import type {
 import type { LLMProvider } from "./providers/stub";
 import { StubProvider } from "./providers/stub";
 import { GeminiProvider } from "./providers/gemini";
+import { GroqProvider } from "./providers/groq";
 import { emptyResult } from "./schema";
 import { buildExtractPrompt, buildWritePrompt } from "./prompts";
 
@@ -64,11 +65,18 @@ function safeParse(json: string): Record<string, unknown> {
 }
 
 export function resolveProvider(): LLMProvider {
+  const groqKey = process.env.GROQ_API_KEY;
+  if (groqKey) {
+    const model = process.env.GROQ_MODEL || undefined;
+    return new GroqProvider(groqKey, model);
+  }
+
   const geminiKey = process.env.GEMINI_API_KEY;
   if (geminiKey) {
     const model = process.env.GEMINI_MODEL || undefined;
     return new GeminiProvider(geminiKey, model);
   }
+
   return new StubProvider();
 }
 
@@ -104,9 +112,11 @@ export async function runAnalysis(
     meta: {
       provider: active.name,
       model:
-        active instanceof GeminiProvider
-          ? process.env.GEMINI_MODEL || "gemini-2.0-flash"
-          : undefined,
+        active instanceof GroqProvider
+          ? active.model
+          : active instanceof GeminiProvider
+            ? active.model
+            : undefined,
       input_chars: req.text.length,
       latency_ms,
     },
