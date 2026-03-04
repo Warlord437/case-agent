@@ -10,12 +10,17 @@ const DEPTH_INSTRUCTION: Record<string, string> = {
 };
 
 const LENS_INSTRUCTION: Record<string, string> = {
+  general:
+    "Provide a balanced, general-purpose analysis accessible to a broad audience. Cover business, technical, and strategic dimensions evenly.",
   pm: "Adopt the perspective of a senior Product Manager. Prioritise user impact, product-market fit signals, roadmap implications, stakeholder communication, and feature/capability gaps. Frame risks in terms of delivery timelines and customer outcomes.",
   ba: "Adopt the perspective of a senior Business Analyst. Prioritise requirements clarity, process flows, data models, gap analysis, stakeholder needs, and measurable business outcomes. Be precise about what data is present vs. assumed.",
   consulting:
     "Adopt the perspective of a top-tier Management Consultant. Prioritise strategic positioning, competitive dynamics, market sizing, organisational capability, and actionable recommendations with clear rationale and implementation sequencing.",
-  general:
-    "Provide a balanced, general-purpose analysis accessible to a broad audience. Cover business, technical, and strategic dimensions evenly.",
+  ux: "Adopt the perspective of a senior UX Researcher. Prioritise human factors, user behaviour patterns, usability implications, accessibility gaps, information architecture, cognitive load, and emotional impact. Frame findings in terms of user needs, pain points, mental models, and design opportunities. Flag any missing user research data (personas, journey maps, usability tests) and recommend appropriate research methodologies.",
+  swe: "Adopt the perspective of a senior Software Engineering Researcher. Prioritise system architecture decisions, technical debt implications, scalability bottlenecks, infrastructure dependencies, API design, data pipeline robustness, and engineering trade-offs. Evaluate build-vs-buy decisions, identify single points of failure, and assess technology choices against alternatives. Flag missing technical specifications, benchmarks, or performance data.",
+  aiml: "Adopt the perspective of an AI/ML Specialist. Prioritise model architecture choices, training data quality and representation, bias and fairness concerns, evaluation metrics, deployment infrastructure, MLOps maturity, regulatory compliance (EU AI Act, FDA for medical AI), explainability gaps, and ethical implications. Scrutinise any accuracy claims — distinguish between lab benchmarks and real-world performance. Flag missing information about model validation, dataset composition, drift monitoring, and failure modes.",
+  economist:
+    "Adopt the perspective of a Global Economist. Prioritise macroeconomic impact, market dynamics, labour market effects, wealth distribution implications, trade flows, regulatory arbitrage, fiscal multipliers, and geopolitical dimensions. Evaluate cost-benefit ratios at societal scale, identify externalities (positive and negative), and assess sustainability of economic models presented. Frame risks in terms of systemic fragility, contagion effects, and policy feedback loops. Flag missing economic data such as elasticity estimates, counterfactuals, or distributional analysis.",
 };
 
 export function buildExtractPrompt(req: AnalyzeRequest): string {

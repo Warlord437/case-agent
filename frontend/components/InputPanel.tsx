@@ -21,6 +21,10 @@ const LENS_OPTIONS: { value: Lens; label: string; emoji: string }[] = [
   { value: "pm", label: "Product Manager", emoji: "\u{1F680}" },
   { value: "ba", label: "Business Analyst", emoji: "\u{1F4C8}" },
   { value: "consulting", label: "Consulting", emoji: "\u{1F454}" },
+  { value: "ux", label: "UX Researcher", emoji: "\u{1F3A8}" },
+  { value: "swe", label: "Software Engineer", emoji: "\u{1F4BB}" },
+  { value: "aiml", label: "AI / ML Specialist", emoji: "\u{1F916}" },
+  { value: "economist", label: "Global Economist", emoji: "\u{1F4B9}" },
 ];
 
 export default function InputPanel({ loading, onSubmit }: Props) {

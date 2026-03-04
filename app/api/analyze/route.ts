@@ -5,7 +5,7 @@ import { normalizeText } from "@backend/lib/sanitize";
 import { runAnalysis } from "@backend/llm";
 
 const VALID_DEPTHS: Depth[] = ["concise", "standard", "detailed"];
-const VALID_LENSES: Lens[] = ["pm", "ba", "consulting", "general"];
+const VALID_LENSES: Lens[] = ["general", "pm", "ba", "consulting", "ux", "swe", "aiml", "economist"];
 
 export async function POST(request: NextRequest) {
   try {

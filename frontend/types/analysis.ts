@@ -1,5 +1,13 @@
 export type Depth = "concise" | "standard" | "detailed";
-export type Lens = "pm" | "ba" | "consulting" | "general";
+export type Lens =
+  | "general"
+  | "pm"
+  | "ba"
+  | "consulting"
+  | "ux"
+  | "swe"
+  | "aiml"
+  | "economist";
 
 export interface AnalyzeRequest {
   text: string;
